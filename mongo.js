@@ -1,14 +1,14 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 /* pakotetaan uudet ominaisuudet, jotta ei tule deprecation varoituksia */
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useUnifiedTopology', true);
 
-const url =  process.env.REMINDERDB_URI
-console.log('url: ', url)
+const url =  process.env.REMINDERDB_URI;
+console.log('url: ', url);
 
 mongoose.connect(url)
   .then(() => {
-    console.log('connected to ReminderDB')
+    console.log('connected to ReminderDB', url)
   })
   .catch((error) => {
     console.log('error connecting to ReminderDB:', error.message)
@@ -29,4 +29,4 @@ reminderSchema.set('toJSON', {
     }
   })
 
-  module.exports = mongoose.model('ReminderM', reminderSchema)
+  module.exports = mongoose.model('Reminder', reminderSchema)
