@@ -1,6 +1,5 @@
 # confidential
-mongo.js
-setpass.js
+mongotool.js
 
 # Logs
 logs
