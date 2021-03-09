@@ -8,7 +8,7 @@ console.log('url: ', url);
 
 mongoose.connect(url)
   .then(() => {
-    console.log('connected to ReminderDB')
+    console.log('Connected to ReminderDB')
   })
   .catch((error) => {
     console.log('error connecting to ReminderDB:', error.message)
