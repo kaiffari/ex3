@@ -3,5 +3,6 @@ content-type: application/json
 
 {
     "name": "Have a cat",
-    "timestamp": "2021-11-11T09:00:00.000Z"
+    "timestamp": "2021-11-11T09:00:00.000Z",
+    "important": false
 }
