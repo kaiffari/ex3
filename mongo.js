@@ -8,7 +8,7 @@ console.log('url: ', url);
 
 mongoose.connect(url)
   .then(() => {
-    console.log('connected to ReminderDB', url)
+    console.log('connected to ReminderDB')
   })
   .catch((error) => {
     console.log('error connecting to ReminderDB:', error.message)
@@ -21,12 +21,14 @@ const reminderSchema = new mongoose.Schema({
   important: Boolean
 })
 
-reminderSchema.set('toJSON', {
+/*reminderSchema.set('toJSON', {
     transform: (document, returnedObject) => {
       returnedObject.id = returnedObject._id.toString()
       delete returnedObject._id
       delete returnedObject.__v
     }
-  })
+  })*/
+const Reminder = mongoose.model('Reminder', reminderSchema)
 
-  module.exports = mongoose.model('Reminder', reminderSchema)
+module.exports = Reminder
+  /* module.exports = mongoose.model('Reminder', reminderSchema)*/
