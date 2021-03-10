@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 /* pakotetaan uudet ominaisuudet, jotta ei tule deprecation varoituksia */
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useUnifiedTopology', true);
+/* ohjataan mongoose käyttämän mongon uutta findOneAndUpdate - false sic!*/
+mongoose.set('useFindAndModify', false);
 
 const url =  process.env.REMINDERDB_URI;
 console.log('url: ', url);

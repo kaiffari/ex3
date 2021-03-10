@@ -1,0 +1,8 @@
+PUT http://localhost:3001/api/reminders/60476c0c7162c66375132ffc
+content-type: application/json
+
+{
+    "name": "Have a catnap",
+    "timestamp": "2021-04-05T09:00:00.000Z",
+    "important": true
+}
