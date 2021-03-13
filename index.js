@@ -54,7 +54,7 @@ app.use(requestLogger)
       important: body.important
     }
   
-    console.log('putting: ', reminder)
+    console.log('putting...')
 
     Reminder
       .findByIdAndUpdate(req.params.id, reminder, { new: true } )
