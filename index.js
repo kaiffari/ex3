@@ -2,96 +2,122 @@ const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const Reminder = require('./models/reminderM')
 
-let reminders = [
-    {
-      name: "Buy some eggs",
-      timestamp: "2021-11-10T13:00:00.141Z",
-      id: 1
-    },
-    {
-      name: "Make an omelette",
-      timestamp: "2021-11-11T08:00:00.141Z",
-      id: 2
-    },
-    {
-      name: "Wash dishes",
-      timestamp: "2021-11-11T09:00:00.000Z",
-      id: 3
-    },
-    {
-      name: "Buy more eggs",
-      timestamp: "2021-11-11T13:00:00.000Z",
-      id: 4
-    }
-  ]
+app.use(bodyParser.json())
+app.use(cors())
+app.use(express.static('build'))  /* näin get hakee build/static kansiosta index.html */
+app.use(express.json())
 
-  app.use(bodyParser.json())
-  app.use(cors())
-  app.use(express.static('build'))  /* näin get hakee build/static kansiosta index.html */
-
-
-  const generateId = () => {
-    const maxId = Number(reminders.length > 0 ? reminders.map(r => r.id).sort((a,b) => a - b).reverse()[0] : 1)
-    var newId
-    /* varmistetaan ettei sattumaltakaan tule päällekkäisiä indeksejä */
-    do {
-        newId = Math.floor(Math.random() * 1000000000000)
-    } while (newId == maxId);
-    return newId
-    /*return maxId + 1*/
-  }
+const requestLogger = (req, res, next) => {
+  console.log('Backend Method:', req.method)
+  console.log('Path:  ', req.path)
+  console.log('Body:  ', req.body)
+  console.log('---')
+  next()
+}
+app.use(requestLogger)
   
-  app.post('/api/reminders', (request, response) => {
-    const body = request.body
-    console.log(body)
+  app.post('/api/reminders', (req, res, next) => {  /* https://thawing-bayou-48463.herokuapp.com voi jättää pois, tarvitaan paikallisen testaamiseen?*/
+    const body = req.body
+    console.log('posting...')
   
-    if ((body.name === undefined) || (body.timestamp === undefined)) {
-      return response.status(400).json({error: 'content missing'})
+    if ((body.name === undefined) || (body.name === '') || (body.timestamp === undefined)) {
+      return res.status(400).json({error: 'content missing'})
     }
-    /* prevent duplicates 
-    var pos = this.props.reminders.findIndex(o => o.name === this.state.newReminder)*/
-    var pos = reminders.findIndex(o => o.name === body.name)
-    if (pos == -1) {
-        const reminder = {
+
+    /* create new reminder */
+          const reminder = new Reminder({
             name: body.name,
             timestamp: body.timestamp,
-            id: generateId()
-        }
-        reminders = reminders.concat(reminder)
-        response.json(reminder)
-      } else {
-        return response.status(400).json({error: 'Name must be unique!'})
-      }
+            important: body.important
+          })
+    /* write reminder to collection */
+      reminder
+        .save()
+        .then(savedReminder => {
+          console.log('reminder saved:', savedReminder._id)
+          res.json(savedReminder._id)
+        })
+        .catch(error => {
+          console.log('Error: ', error.message)
+          next(error)
+        })
   })
 
-  app.get('/', (req, res) => {
-    res.send('<h1>Hello World, Yo!</h1>')
+  app.put('/api/reminders/:id', (req, res) => {
+    const body = req.body
+  
+    const reminder = {
+      name: body.name,
+      timestamp: body.timestamp,
+      important: body.important
+    }
+  
+    console.log('putting: ', reminder)
+
+    Reminder
+      .findByIdAndUpdate(req.params.id, reminder, { new: true } )
+      .then(updatedReminder => {
+
+        if (updatedReminder) {
+          res.json(updatedReminder)
+        } else {
+          console.log('Not found: ', req.params.id)
+          res.status(404).end()
+        }
+      })
+      .catch(error => {
+        console.log(error)
+        res.status(400).send({ error: 'malformatted id' })
+      })
   })
   
   app.get('/api/reminders', (req, res) => {
-    res.json(reminders)
+    console.log('Backend - get all')
+    Reminder.find({}).then(reminders => {
+      console.log('get all res: ', reminders.length),
+      res.json(reminders)
+    })
+    .catch((error) => {
+      console.log('error getting all reminders:', error.message)
+    })
   })
 
-  app.get('/api/reminders/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const reminder = reminders.find(reminder => {
-        /*console.log(reminder.id, typeof reminder.id, id, typeof id, reminder.id === id)*/
-        return reminder.id === id 
-    })
-    if ( reminder ) {
-        response.json(reminder)
-      } else {
-        response.status(404).end()
-      }  
+  app.get('/api/reminders/:id', (req, res, next) => {
+    Reminder.findById(req.params.id)
+      .then (reminders => {
+        if (reminders) {
+          res.json(reminders)
+        } else {
+          console.log('Not found: ', req.params.id)
+          res.status(404).end()
+        }
+      })
+      .catch(error => {
+        console.log(error)
+        res.status(400).send({ error: 'malformatted id' })
+        next(error)
+      })
   })
   
-  app.delete('/api/reminders/:id', (request, response) => {
-    const id = Number(request.params.id)
-    reminders = reminders.filter(r => r.id !== id)
-    response.status(204).end()
+  app.delete('/api/reminders/:id', (req, res) => {
+    Reminder
+    .findByIdAndRemove(req.params.id)
+    .then(result => {
+      res.status(204).end()   // no more detailed error handler since always returns 204
+    })
+    .catch(error => {
+      res.status(400).send({ error: 'malformatted id' })
+    })
   })
-        
+
+  const unknownEndpoint = (req, res) => {
+    console.log('Backend - unknown endpoint')
+    res.status(404).send({ error: 'unknown endpoint' })
+  }
+  app.use(unknownEndpoint)
+
   /*const PORT = 3001*/
   const PORT = process.env.PORT || 3001
   app.listen(PORT, () => {
